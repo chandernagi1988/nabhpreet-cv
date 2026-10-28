@@ -14,7 +14,8 @@
     --light:#f5f1ec;
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{background:#d9d9d9;font-family:'Archivo',Arial,sans-serif;color:var(--text);padding:24px 0}
+  body{background:#d9d9d9;font-family:'Archivo',Arial,sans-serif;color:var(--text);padding:24px 0;overflow-x:hidden}
+  @media (max-width:820px){body{padding:12px 0}}
   .page{
     width:794px;height:1123px;margin:0 auto;background:var(--paper);
     border-radius:28px;overflow:hidden;position:relative;
@@ -78,7 +79,11 @@
   .toolbar button.word{background:#2b579a}
   .toolbar button:disabled{opacity:.6;cursor:wait}
   @media (max-width:820px){.toolbar{justify-content:center}}
+  .fit{margin:0 auto;overflow:hidden}
+  .fit .page{transform-origin:top left}
   @media print{
+    .fit{width:auto!important;height:auto!important}
+    .fit .page{transform:none!important}
     .toolbar{display:none}
     body{background:#fff;padding:0}
     .page{margin:0;border-radius:0}
@@ -92,6 +97,7 @@
   <button id="btnPdf" onclick="downloadPDF()">Download PDF</button>
   <button id="btnWord" class="word" onclick="downloadWord()">Download Word</button>
 </div>
+<div class="fit" id="fit">
 <div class="page" id="cv">
 
   <!-- LEFT COLUMN -->
@@ -202,14 +208,29 @@
 
   <div class="footer-bar"></div>
 </div>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
+function fitPage(){
+  var fit=document.getElementById('fit'),pg=document.getElementById('cv');
+  var avail=document.documentElement.clientWidth-16;
+  var sc=Math.min(1,avail/794);
+  if(sc<1){
+    pg.style.transform='scale('+sc+')';pg.style.margin='0';
+    fit.style.width=(794*sc)+'px';fit.style.height=(1123*sc)+'px';
+  }else{
+    pg.style.transform='';pg.style.margin='';fit.style.width='';fit.style.height='';
+  }
+}
+window.addEventListener('resize',fitPage);fitPage();
+
 function downloadPDF(){
   var btn=document.getElementById('btnPdf');
   if(typeof html2pdf==='undefined'){window.print();return;}
   btn.disabled=true;btn.textContent='Preparing...';
   var el=document.getElementById('cv');
+  var t=el.style.transform;el.style.transform='none';
   var r=el.style.borderRadius;el.style.borderRadius='0';
   html2pdf().set({
     margin:0,filename:'Nabhpreet_Kaur_CV.pdf',
@@ -217,8 +238,8 @@ function downloadPDF(){
     html2canvas:{scale:2,useCORS:true,scrollY:0},
     jsPDF:{unit:'px',format:[794,1123],orientation:'portrait',hotfixes:['px_scaling']}
   }).from(el).save().then(function(){
-    el.style.borderRadius=r;btn.disabled=false;btn.textContent='Download PDF';
-  }).catch(function(){el.style.borderRadius=r;btn.disabled=false;btn.textContent='Download PDF';window.print();});
+    el.style.borderRadius=r;el.style.transform=t;btn.disabled=false;btn.textContent='Download PDF';
+  }).catch(function(){el.style.borderRadius=r;el.style.transform=t;btn.disabled=false;btn.textContent='Download PDF';window.print();});
 }
 
 function downloadWord(){
